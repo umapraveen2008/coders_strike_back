@@ -15,6 +15,7 @@ int main()
     const int mAngleToSteer = 1;
     const int mDecelerationAngle = 90;
 
+    bool canUseBoost = true;
     // game loop
     while (1) {
         int x;
@@ -44,8 +45,16 @@ int main()
             }
         }
         cout << nextCheckpointX << " " << nextCheckpointY << " " ;
-        
-        cout << thrust;
+        bool useBoost = false;
+        if(rand() % 2 == 0 && canUseBoost)
+        {
+            useBoost = true;
+            canUseBoost = false;
+        }
+        if(useBoost)
+            cout << " BOOST";
+        else
+            cout << thrust;
         cout << endl;
     }
 }
