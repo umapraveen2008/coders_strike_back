@@ -25,6 +25,10 @@ struct Vector2
         const float norm = sqrt(x*x+y*y);
         return Vector2(x/norm, y/norm);
     }
+
+       float magnitued() const{
+        return sqrt(x * x + y * y);
+    }
 };
 
 bool operator==(const Vector2& a, const Vector2& b)
@@ -43,7 +47,18 @@ Vector2 operator*(float k, const Vector2& a)
 {
     return Vector2(k*a.x, k*a.y);
 }
-
+float distSqr(const Vector2& a, const Vector2& b)
+{
+    return (a.x - b.x)*(a.x - b.x) + (a.y - b.y)*(a.y - b.y);
+}
+float dist(const Vector2& a, const Vector2& b)
+{
+    return sqrt(distSqr(a, b));
+}
+float dot(const Vector2& a, const Vector2& b)
+{
+    return a.x*b.x + a.y*b.y;
+}
 
 class PlaneManager{
 public:
@@ -105,12 +120,22 @@ inline
 
 int main()
 {
+    int previousX;
+    int previousY;
+
+    int enemyPreviousX;
+    int enemyPreviousY;
+
+    const int mCollisionDetectionRadius = 900;
     const int mAngleToSteer = 1;
     const int mDecelerationAngle = 90;
     const float mDecelerationRadius = 600 * 4;
+    const int mShieldDetectionAngle = 20;
 
     PlaneManager planeManager;
 
+    int shieldCoolDown = 15;
+    int currentShiledCD = shieldCoolDown;
     
     // game loop
     while (1) {
@@ -132,6 +157,11 @@ int main()
         // You have to output the target position
         // followed by the power (0 <= thrust <= 100)
         // i.e.: "x y thrust"
+
+        Vector2 previousPosition = Vector2(previousX,previousY);
+        Vector2 enemyPreviousPosition = Vector2(enemyPreviousX,enemyPreviousY);
+
+
         int thrust = 100;
         bool useBoost = false;
 
@@ -168,14 +198,36 @@ int main()
             }
         }
 
-        cout << nextCheckpointX << " " << nextCheckpointY << " " ;
+        Vector2 currentPosition = Vector2(x,y);
+        Vector2 enemyPosition = Vector2(opponentX,opponentY);
+
+        Vector2 direction = (currentPosition - previousPosition).normalized();
+        Vector2 enemyDirection = (enemyPosition - enemyPreviousPosition).normalized();
         
-         if(useBoost){
+        float angle = acos(dot(direction,enemyDirection)/(direction.magnitued())*(enemyDirection.magnitued()));
+
+        float enemyDistance = dist(enemyPosition,currentPosition);
+
+        cout << nextCheckpointX << " " << nextCheckpointY << " ";
+        
+        --currentShiledCD;
+        
+        if(enemyDistance < mCollisionDetectionRadius && abs(angle) < mShieldDetectionAngle && currentShiledCD < 0)
+        {
+            currentShiledCD = shieldCoolDown;
+            cout << "SHIELD";
+        }
+        else if(useBoost){
             cout << "BOOST";
         }
         else{
             cout << thrust;
         }
         cout << endl;
+
+        previousX = x;
+        previousY = y;
+        enemyPreviousX = opponentX;
+        enemyPreviousY = opponentY;
     }
 }
