@@ -68,6 +68,15 @@ public:
         return _isBoostAvailable;
     }
 
+    bool IsAllCheckpointsFound()
+    {
+        return _allCheckpointsFound;
+    }
+
+    void BoostUsed()
+    {
+        _isBoostAvailable = false;
+    }
     void AddNextCheckPoint(int x, int y,int distance){
         if(_allCheckpointsFound)
             return;
@@ -157,9 +166,19 @@ int main()
         // You have to output the target position
         // followed by the power (0 <= thrust <= 100)
         // i.e.: "x y thrust"
-
+        Vector2 targetPosition = Vector2(nextCheckpointX,nextCheckpointY);
         Vector2 previousPosition = Vector2(previousX,previousY);
         Vector2 enemyPreviousPosition = Vector2(enemyPreviousX,enemyPreviousY);
+
+
+        Vector2 currentPosition = Vector2(x,y);
+        Vector2 enemyPosition = Vector2(opponentX,opponentY);
+
+
+        
+        float enemyDistance = dist(enemyPosition,currentPosition);
+        float enemyTargetDistance = dist(enemyPosition,targetPosition);
+        bool isEnemyFast = enemyDistance < nextCheckpointDist;
 
 
         int thrust = 100;
@@ -188,8 +207,9 @@ int main()
         }
         else{
             
-            if(planeManager.UseBoost(nextCheckpointDist))
+            if((isEnemyFast && planeManager.IsAllCheckpointsFound() )|| planeManager.UseBoost(nextCheckpointDist))
             {
+                planeManager.BoostUsed();
                 useBoost = true;
             }
             else if(nextCheckpointDist < mDecelerationRadius)
@@ -198,21 +218,17 @@ int main()
             }
         }
 
-        Vector2 currentPosition = Vector2(x,y);
-        Vector2 enemyPosition = Vector2(opponentX,opponentY);
 
         Vector2 direction = (currentPosition - previousPosition).normalized();
         Vector2 enemyDirection = (enemyPosition - enemyPreviousPosition).normalized();
-        
-        float angle = acos(dot(direction,enemyDirection)/(direction.magnitued())*(enemyDirection.magnitued()));
 
-        float enemyDistance = dist(enemyPosition,currentPosition);
+        float angle = acos(dot(direction,enemyDirection)/(direction.magnitued())*(enemyDirection.magnitued()));
 
         cout << nextCheckpointX << " " << nextCheckpointY << " ";
         
         --currentShiledCD;
         
-        if(enemyDistance < mCollisionDetectionRadius && abs(angle) < mShieldDetectionAngle && currentShiledCD < 0)
+        if(enemyDistance > nextCheckpointDist && enemyDistance < mCollisionDetectionRadius && abs(angle) < mShieldDetectionAngle && currentShiledCD < 0)
         {
             currentShiledCD = shieldCoolDown;
             cout << "SHIELD";
